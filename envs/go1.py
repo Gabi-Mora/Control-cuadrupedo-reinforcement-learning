@@ -29,8 +29,8 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         target_y = 0,
         delta = 0.5,
         timesteps = 0,
-        factor_dist = 0.8,
-        factor_healthy = 0.4,
+        factor_dist = 1.0,
+        factor_healthy = 0.6,
         factor_ctrl = 0.15,
         factor_time = 0.5,
         exp_dist = -1,
@@ -40,6 +40,8 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         reward_time = 0,
         reward_total = 0,
         num_contact = 0,
+        action = 0,
+        contact_array = 0,
     ):
         utils.EzPickle.__init__(**locals())
 
@@ -79,6 +81,9 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.reward_total = reward_total
 
         self.num_contact = num_contact
+
+        self.action = action
+        self.contact_array = contact_array
 
         self._exclude_current_positions_from_observation = (
             exclude_current_positions_from_observation
@@ -135,114 +140,20 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         self.num_contact = self.sim.data.ncon # Guardamos el numero de contactos que se ha producido
 
-        # Atravesamos el array de todos los cantactos existentes para determinar si hay alguno que es considerado "unhealthy" (No he encontrado la manera de hacer esto sin tener que hacer esta monstruosidad)
+        self.contact_array = [False for i in range(43)]
+
+        # Atravesamos el array de todos los cantactos existentes para determinar si hay alguno que es considerado "unhealthy"
         for X in range(self.sim.data.ncon):
             i = self.sim.data.contact[X]
-            if (i.geom1 == id_floor and i.geom2 == 5) or (i.geom2 == id_floor and i.geom1 == 5):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 6) or (i.geom2 == id_floor and i.geom1 == 6):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 7) or (i.geom2 == id_floor and i.geom1 == 7):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 8) or (i.geom2 == id_floor and i.geom1 == 8):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 9) or (i.geom2 == id_floor and i.geom1 == 9):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 10) or (i.geom2 == id_floor and i.geom1 == 10):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 11) or (i.geom2 == id_floor and i.geom1 == 11):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 14) or (i.geom2 == id_floor and i.geom1 == 14):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 15) or (i.geom2 == id_floor and i.geom1 == 15):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 16) or (i.geom2 == id_floor and i.geom1 == 16):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 17) or (i.geom2 == id_floor and i.geom1 == 17):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 18) or (i.geom2 == id_floor and i.geom1 == 18):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 19) or (i.geom2 == id_floor and i.geom1 == 19):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 20) or (i.geom2 == id_floor and i.geom1 == 20):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 23) or (i.geom2 == id_floor and i.geom1 == 23):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 24) or (i.geom2 == id_floor and i.geom1 == 24):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 25) or (i.geom2 == id_floor and i.geom1 == 25):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 26) or (i.geom2 == id_floor and i.geom1 == 26):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 27) or (i.geom2 == id_floor and i.geom1 == 27):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 28) or (i.geom2 == id_floor and i.geom1 == 28):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 29) or (i.geom2 == id_floor and i.geom1 == 29):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 30) or (i.geom2 == id_floor and i.geom1 == 30):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 33) or (i.geom2 == id_floor and i.geom1 == 33):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 34) or (i.geom2 == id_floor and i.geom1 == 34):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 35) or (i.geom2 == id_floor and i.geom1 == 35):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 36) or (i.geom2 == id_floor and i.geom1 == 36):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 37) or (i.geom2 == id_floor and i.geom1 == 37):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 38) or (i.geom2 == id_floor and i.geom1 == 38):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 39) or (i.geom2 == id_floor and i.geom1 == 39):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == 40) or (i.geom2 == id_floor and i.geom1 == 40):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == id_trunk) or (i.geom2 == id_floor and i.geom1 == id_trunk):
-                unhealthy_contact      = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == id_FR_thigh) or (i.geom2 == id_floor and i.geom1 == id_FR_thigh):
-                unhealthy_contact   = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == id_FL_thigh) or (i.geom2 == id_floor and i.geom1 == id_FL_thigh):
-                unhealthy_contact   = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == id_RR_thigh) or (i.geom2 == id_floor and i.geom1 == id_RR_thigh):
-                unhealthy_contact   = True
-                break
-            if (i.geom1 == id_floor and i.geom2 == id_RL_thigh) or (i.geom2 == id_floor and i.geom1 == id_RL_thigh):
-                unhealthy_contact   = True
-                break
+            cont1 = i.geom1
+            cont2 = i.geom2
+
+            self.contact_array[cont1] = True
+            self.contact_array[cont2] = True
+
+            if cont1 == 0 and unhealthy_contact == False:
+                if cont2 != 12 and cont2 != 13 and cont2 != 21 and cont2 != 22 and cont2 != 32 and cont2 != 33 and cont2 != 41 and cont2 != 42:
+                    unhealthy_contact = True
 
         return unhealthy_contact
     
@@ -275,8 +186,10 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         self.do_simulation(action, self.frame_skip)
 
+        self.action = action
+
         vec = self.get_body_com("trunk")[:2] - self.get_body_com("target")[:2]                          # Distancia entre el torso y el objetivo
-        reward_dist = math.exp(self.exp_dist * (np.linalg.norm(vec) - self.delta )) * self.factor_dist  # Calculo de la recompensa en base a la distancia
+        reward_dist = math.exp(self.exp_dist * (np.linalg.norm(vec))) * self.factor_dist  # Calculo de la recompensa en base a la distancia
         healthy_reward = self.healthy_reward * self.factor_healthy                                      # Calculo de la recompensa healthy
 
         ctrl_cost = math.exp(self.exp_ctrl * self.control_cost(action)) * self.factor_ctrl              # Calculo del castigo por control --> Actualmente tiene nulo impacto
@@ -330,10 +243,13 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def _get_obs(self):
         position = self.sim.data.qpos.flat.copy()
         velocity = self.sim.data.qvel.flat.copy()
+        action = self.action
 
         ncom = self.num_contact = self.sim.data.ncon # Numero de contactos producidos
+
+        self.contact_array = np.array(self.contact_array)
         
-        observations = np.concatenate((position[:-2], velocity[:-2], np.array([ncom]), position[-2:], self.get_body_com("trunk")[:2] - self.get_body_com("target")[:2], np.array([self.timesteps])))
+        observations = np.concatenate((position[:-2], velocity[:-2], action, self.contact_array, position[-2:], self.get_body_com("trunk")[:2] - self.get_body_com("target")[:2], np.array([self.timesteps])))
 
         return observations
 
