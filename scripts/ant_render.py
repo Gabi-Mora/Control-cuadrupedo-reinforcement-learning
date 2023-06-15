@@ -6,7 +6,7 @@ import os
 from my_ant import My_AntEnv
 
 models_dir = "models/PPO"
-model_path = f"{models_dir}/2490000.zip"
+model_path = f"{models_dir}/2500000.zip"
 
 TIMESTEPS = 100000
 env = make_vec_env('GoOne-v1')
