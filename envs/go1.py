@@ -31,7 +31,7 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         timesteps = 0,
         factor_dist = 1.0,
         factor_healthy = 0.6,
-        factor_ctrl = 0.15,
+        factor_ctrl = 0.001, #0.15,
         factor_time = 0.5,
         exp_dist = -1,
         exp_ctrl = -1.5,
@@ -101,7 +101,7 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     # Coste del control producido
     def control_cost(self, action):
-        control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
+        control_cost = self._ctrl_cost_weight * np.sum(np.square(action / 33.5))
         return control_cost
 
     @property
@@ -190,17 +190,18 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         vec = self.get_body_com("trunk")[:2] - self.get_body_com("target")[:2]                          # Distancia entre el torso y el objetivo
         reward_dist = math.exp(self.exp_dist * (np.linalg.norm(vec))) * self.factor_dist  # Calculo de la recompensa en base a la distancia
-        healthy_reward = self.healthy_reward * self.factor_healthy                                      # Calculo de la recompensa healthy
+        #healthy_reward = self.healthy_reward * self.factor_healthy                                       # Calculo de la recompensa healthy
 
-        ctrl_cost = math.exp(self.exp_ctrl * self.control_cost(action)) * self.factor_ctrl              # Calculo del castigo por control --> Actualmente tiene nulo impacto
+        #ctrl_cost = math.exp(self.exp_ctrl * self.control_cost(action)) * self.factor_ctrl              # Calculo del castigo por control --> Actualmente tiene nulo impacto
         #ctrl_cost = 1 - math.exp(-0.05 * self.control_cost(action)) * self.factor_ctrl                 # Calculo del castigo por control --> Da problemas
+        ctrl_cost = (1 - math.exp(-0.12 * self.control_cost(action))) * self.factor_ctrl                 # Calculo del castigo por control --> Da problemas
         
-        contact_cost = math.exp(-3 * (self.num_contact**-2.25)) * 0.05 if self.num_contact != 0 else 0  # Castigo en base a la cantidad de contactos producidos (con el suelo o con sigo mismo)
+        #contact_cost = math.exp(-3 * (self.num_contact**-2.25)) * 0.05 if self.num_contact != 0 else 0  # Castigo en base a la cantidad de contactos producidos (con el suelo o con sigo mismo)
         
-        time_cost = (self.timesteps >= 400) * (1 - math.exp( self.exp_time * ( (self.timesteps - 400 )/100) )) * self.factor_time # Castigo por tiempo
+        #time_cost = (self.timesteps >= 400) * (1 - math.exp( self.exp_time * ( (self.timesteps - 400 )/100) )) * self.factor_time # Castigo por tiempo
 
-        rewards = reward_dist + healthy_reward              # Suma de las recompensas
-        costs = ctrl_cost + contact_cost + time_cost        # Suma de los castigos
+        rewards = reward_dist             # Suma de las recompensas
+        costs = ctrl_cost                 # Suma de los castigos
         reward = rewards - costs                            # Calculo de la recompensa final
 
         done = self.done
@@ -244,12 +245,8 @@ class GoOneEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         position = self.sim.data.qpos.flat.copy()
         velocity = self.sim.data.qvel.flat.copy()
         action = self.action
-
-        ncom = self.num_contact = self.sim.data.ncon # Numero de contactos producidos
-
-        self.contact_array = np.array(self.contact_array)
         
-        observations = np.concatenate((position[:-2], velocity[:-2], action, self.contact_array, position[-2:], self.get_body_com("trunk")[:2] - self.get_body_com("target")[:2], np.array([self.timesteps])))
+        observations = np.concatenate((position[:-2], velocity[:-2], action, position[-2:], self.get_body_com("trunk")[:2] - self.get_body_com("target")[:2]))
 
         return observations
 
